@@ -1,0 +1,274 @@
+{% extends 'base.html' %}
+{% block title %} Схемы {% endblock %}
+{% block content %}
+
+  <form action="" id="schema_form">
+    <div class="row">
+      <h4 class="col">New schema</h4>
+      <button class="align-items-end btn btn-primary" type="button" onclick="send_data()">Submit</button>
+    </div>
+    <label class="form-label mt-3" id="labelFileName">Name</label>
+    <input class="col-6 form-control uncolumn" type="text" name="FileName" id="inputFileName"
+           value="{{ schema.filename }}" maxlength="100">
+    <label class="form-label mt-3" id="labelColumnSeparator">Column Separator</label>
+    <select class="col-6 form-control uncolumn" name="ColumnSeparator">
+      {% for separator in column_separators %}
+        {% if separator.id == schema.column_separator %}
+          <option value="{{ separator.id }}" selected>{{ separator.name }}</option>
+        {% else %}
+          <option value="{{ separator.id }}">{{ separator.name }}</option>
+        {% endif %}
+      {% endfor %}
+    </select>
+    <label class="form-label mt-3" id="labelStringCharacter">String Character</label>
+    <select class="col-6 form-control uncolumn" type="text" name="StringCharacter">
+      {% for character in string_characters %}
+        {% if character.id == schema.string_character %}
+          <option value="{{ character.id }}" selected>{{ character.name }}</option>
+        {% else %}
+          <option value="{{ character.id }}">{{ character.name }}</option>
+        {% endif %}
+      {% endfor %}
+    </select>
+
+    <div class="container mt-3">
+      <h4>Schema columns</h4>
+      <table id="main-table">
+        <tbody>
+          {% for column in schema.columns %}
+            <tr>
+              <td>
+                <label class="form-label">Column name</label>
+                <input class="form-control" type="text" name="ColumnName" value="{{ column.name }}" maxlength="50">
+              </td>
+              <td class="px-4" width="250">
+                <label class="form-label">Type</label>
+                <select class="form-control form-select select_type" aria-label="ColumnType" name="ColumnType"
+                        onchange="extra_argument(this)">
+                  {% for type in column_types %}
+                    {% if type.id == column.column_type %}
+                      <option value="{{ type.id }}" selected>{{ type.name }}</option>
+                    {% else %}
+                      <option value="{{ type.id }}">{{ type.name }}</option>
+                    {% endif %}
+                  {% endfor %}
+                </select>
+              </td>
+              <td {% if column.column_type != 8 %} style="visibility: hidden;" {% endif %}>
+                <div class="input-group">
+                  <div class="col">
+                    <label class="form-label">From</label>
+                    <input class="form-control" type="number" name="MinInteger"
+                           value="{% if column.column_type == 8 %}{{ column.integer_from }}{% endif %}">
+                  </div>
+                  <div class="col">
+                    <label class="form-label ">To</label>
+                    <input class="form-control " type="number" name="MaxInteger"
+                           value="{% if column.column_type == 8 %}{{ column.integer_to }}{% endif %}">
+                  </div>
+                </div>
+              </td>
+              <td class="px-sm-2">
+                <label class="form-label">Order</label>
+                <input class="form-control" type="number" name="Order" value="{{ column.order }}">
+              </td>
+              <td class="align-bottom">
+                <button class="btn-delete text-danger" type="button" onclick="deleteRow(this)">Delete</button>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <hr class="dropdown-divider">
+  </form>
+
+  <!-- Add new Row -->
+  <div class="card card-body mt-4">
+    <table>
+      <tbody class="data-new-row">
+        <tr id="new-row">
+          <td>
+            <label class="form-label">Column name</label>
+            <input class="form-control" type="text" name="ColumnName" maxlength="50">
+          </td>
+          <td class="px-4" width="250">
+            <label class="form-label">Type</label>
+            <select class="form-control form-select select_type" aria-label="ColumnType" name="ColumnType"
+                    onchange="extra_argument(this)">
+              {% for type in column_types %}
+                <option value="{{ type.id }}">{{ type.name }}</option>
+              {% endfor %}
+            </select>
+          </td>
+          <td style="visibility: hidden;">
+            <div class="input-group">
+              <div class="col">
+                <label class="form-label">From</label>
+                <input class="form-control" type="number" name="MinInteger" min="1">
+              </div>
+              <div class="col">
+                <label class="form-label ">To</label>
+                <input class="form-control " type="number" name="MaxInteger" min="1">
+              </div>
+            </div>
+          </td>
+          <td class="px-sm-2">
+            <label class="form-label">Order</label>
+            <input class="form-control" type="text" name="Order">
+          </td>
+          <td class="align-bottom">
+            <button class="btn-delete text-danger" type="button" onclick="deleteRow(this)">Delete</button>
+          </td>
+        </tr>
+        <tr>
+          <td class="pt-4">
+            <button id="add_column_btn" class="btn btn-primary" onclick="addColumn()">Add column</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+{% endblock %}
+{% block javascript %}
+  <script>
+    var main_table = document.getElementById('main-table');
+
+    function extra_argument(td_element) {
+      const next_td = td_element.parentNode.nextElementSibling;
+      let current_select = td_element.querySelector('option:checked').getAttribute('value');
+      if (current_select !== '8') {
+        next_td.style.visibility = "hidden";
+      } else {
+        next_td.style.visibility = "visible";
+      }
+    }
+    function deleteRow(button) {
+      const current_tr = button.parentNode.parentNode;
+      if (current_tr.parentNode.parentNode === main_table) {
+        main_table.childNodes[1].deleteRow(current_tr.rowIndex)
+      }
+    }
+    function addColumn(){
+      let template_row = document.getElementById('new-row');
+      let new_row = template_row.cloneNode(true);
+
+      let selector_template = template_row.getElementsByClassName('form-select')[0]
+      let selector_new_row = new_row.getElementsByClassName('form-select')[0]
+
+      for (let i = 0; i < selector_new_row.options.length; i++) {
+        if (selector_template.options[i] === selector_template.querySelector('option:checked')) {
+          selector_new_row.options[i].defaultSelected = true
+        }
+      }
+      // Remove unique id. Need to copy row.
+      new_row.removeAttribute('id');
+      main_table.childNodes[1].appendChild(new_row);
+      // Clean input value
+      let inputs = template_row.getElementsByTagName('input');
+      for (let i = 0; i < inputs.length; i++) {
+        inputs[i].value = ''
+      }
+    }
+    function send_data(){
+      let formData = new FormData(document.getElementById('schema_form'));
+      var request_data = {'columns': []}
+      var checked_key = []
+      var unique_fields = {'columnNames': [], 'columnOrders': []}
+
+      if (checkInputFileName() === false) {return}
+      formData.delete('csrfmiddlewaretoken')
+
+      // Create info about file
+      for (const element of document.getElementsByClassName('uncolumn')){
+        request_data[element.name] = element.value;
+        formData.delete(element.name)
+      }
+
+      for (let key of formData.keys()) {
+        // for stop cycle after one circle of cycle
+        if (checked_key.includes(key)){break}
+        checked_key.push(key)
+
+        var i = 0
+        for (var key_value of formData.getAll(key)){
+          // Create empty element in dict
+          if (request_data['columns'].length < formData.getAll(key).length){request_data['columns'].push({})}
+
+          // Validate data
+          if (validateData(key, key_value, i, request_data, unique_fields) === false){return}
+
+          // Add new element in list
+          if ((key === 'MinInteger' || key === 'MaxInteger') && key_value === '') {key_value = null}
+          request_data['columns'][i][key] = key_value
+          if (key === 'ColumnName') {unique_fields['columnNames'].push(key_value)}
+          else if (key === 'Order') {unique_fields['columnOrders'].push(key_value)}
+          i++;
+        }
+	  }
+
+      if (request_data['columns'].length < 1) {window.alert('Create schema columns');}
+
+      var req = new XMLHttpRequest();
+      if ('{{ schema.id }}' !== ''){
+        req.open("PATCH", "{% url 'api:schema' %}?schema_id={{schema.id}}", true);
+      } else {
+        req.open("POST", "{% url 'api:schema' %}", true);
+      }
+
+      req.onload = function() {
+        let body = JSON.parse(this.response);
+        if (this.status === 200) {
+          location.replace(body.url)
+        } else if (this.status === 400) {
+          let error_msg = body.detail
+          if (error_msg === undefined) {error_msg = 'System can\'t create dataset'}
+          window.alert(`Error. ${error_msg}`)
+        } else {window.alert(`System error.`)}
+      };
+
+      req.setRequestHeader("X-CSRFToken", csrftoken)
+      req.setRequestHeader('Content-Type', 'application/json')
+      req.send(JSON.stringify(request_data));
+    }
+
+    function checkInputFileName(){
+      console.log('submit')
+      var input = document.getElementById('inputFileName')
+      if (input.value.search('^[\\wа-яА-я]*$') === -1) {
+        window.alert('FileName can\'t have !@#$%^&*()_:;|\\*?><~`"№ symbols')
+        return false
+      } else if (input.value === ''){
+        alert(`Input data in ${document.getElementById(`label${input.name}`).textContent}`)
+        return false
+      }
+      return true
+    }
+
+    function validateData(key, value, index_column, request_data, unique_fields){
+      if (key === 'ColumnName' && value.search('[;\'\"]') !== -1) {
+        window.alert(`Column name can't have ;\'\" symbols.\nCheck Column name in ${index_column+1} row.`)
+      } else if (key === 'Order' && value === '') {
+        window.alert(`Order is required field for all columns.\nInput order in ${index_column+1} row.`)
+      } else if (key === 'Order' && unique_fields['columnOrders'].includes(value)) {
+        window.alert(`Duplicate column order in ${unique_fields['columnOrders'].indexOf(value) + 1} and ${index_column+1} rows.`)
+      } else if (key === 'Order' && parseInt(value) < 1){
+        window.alert(`Order cannot be less 1 in ${index_column+1} row.`)
+      } else if ((key === 'MinInteger' || key === 'MaxInteger') && request_data['columns'][index_column]['ColumnType'] === '8'
+              && value === '') {
+        window.alert(`Integer field type must have fill 'From' and 'To' inputs.\nCheck ${index_column+1} row.`)
+      } else if (key === 'ColumnName' && unique_fields['columnNames'].includes(value)) {
+        window.alert(`Duplicate column names in ${unique_fields['columnNames'].indexOf(value)+1} and ${index_column+1} rows.`)
+      } else if (key === 'MaxInteger' && parseInt(request_data['columns'][index_column]['MinInteger']) > parseInt(value)) {
+        var min_int = request_data['columns'][index_column]['MinInteger']
+        console.log('Min: ',typeof min_int, '| Max', typeof value)
+        console.log(min_int > value)
+        console.log(`Value: ${value} | Min: ${request_data['columns'][index_column]['MinInteger']}`)
+        // console.log(request_data['columns'][index_column]['MinInteger'] > value)
+        window.alert(`'To' cannot be less than 'From'.\nCheck ${index_column+1} row.`)
+      } else {return true}
+
+      return false
+    }
+  </script>
+{% endblock %}

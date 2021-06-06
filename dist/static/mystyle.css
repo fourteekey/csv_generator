@@ -1,0 +1,28 @@
+/*body {*/
+/*  height: 100%;*/
+/*}*/
+.card-login {
+  width: 650px;
+  max-height: 445px;
+
+}
+
+.btn-login{
+  width: 85px;
+  height: 38px;
+}
+
+.ml-10-pr{
+  margin-left: 10%;
+}
+
+.btn-delete{
+  background: none!important;
+  border: none;
+  padding: 0!important;
+}
+
+.btn-delete:hover{
+  text-decoration: underline;
+  cursor: pointer;
+}

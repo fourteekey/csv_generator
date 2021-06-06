@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+{% block title %} Data sets {% endblock %}
+{% block content %}
+  <div class="row">
+    <h4 class="col">Data sets</h4>
+    <span>
+      <form class="form-inline form-group justify-content-end">
+          <label for="CountRow" >Rows:</label>
+          <input type="number" class="col-3 form-control mx-sm-3" id="CountRow" width="100">
+          <button type="button" class="btn btn-success" onclick="createDataSet()">Generate data</button>
+      </form>
+    </span>
+  </div>
+  <table id="main-table" class="table table-bordered mt-3">
+    <thead>
+      <tr>
+        <th scope="col">#</th>
+        <th scope="col">Created</th>
+        <th scope="col">Status</th>
+        <th scope="col" >Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for data in datasets %}
+        <tr>
+          <th>{{ data.id }}</th>
+          <td>{{ data.created }}</td>
+          <td>
+            <span class="badge {{ data.css_style }} text-white">{{ data.status }}</span>
+          </td>
+          <td>
+            {% if data.status_id == 3 %}
+              <a class="text-primary " href="{% url 'download_dataset' data.id %}" target="_blank">Download</a></td>
+            {% endif %}
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endblock %}
+
+{% block javascript %}
+  <script>
+    function createDataSet(){
+      let count_rows = document.getElementById('CountRow')
+      if (count_rows.value < 1 || count_rows.value > 100000 || count_rows.value === '') {
+        window.alert('Count rows must be from 1 to 100 000')
+        return false
+      }
+
+      var req = new XMLHttpRequest();
+      req.open('POST', "{% url 'api:dataset' %}?schema={{schema_id}}", true);
+      req.onload = function() {
+        let body = JSON.parse(this.response);
+        if (this.status === 200) {
+          var table = document.getElementById('main-table')
+          var row = table.insertRow(1);
+          var cell1 = row.insertCell(0);
+          var cell2 = row.insertCell(1);
+          var cell3 = row.insertCell(2);
+          row.insertCell(3);
+
+          cell1.innerHTML = body.id;
+          cell2.innerHTML = body.created;
+          cell3.innerHTML = `<span class="badge ${body.css_style} text-white">${body.status}</span>`
+        } else if (this.status === 400) {
+          let error_msg = body.detail
+          if (error_msg === undefined) { error_msg = 'System can\'t create dataset'}
+          window.alert(`Error. ${error_msg}`)
+        } else {window.alert(`System error.`)}
+      };
+
+      req.setRequestHeader("X-CSRFToken", csrftoken)
+      req.setRequestHeader('Content-Type', 'application/json')
+      req.send(JSON.stringify({'count_rows': count_rows.value}));
+    }
+  </script>
+{% endblock %}

@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+{% block title %} Schemas {% endblock %}
+{% block content %}
+  <div class="row">
+    <h4 class="col">Data schemas</h4>
+    <a class="btn btn-success text-white align-items-end" href="{% url 'new_schema' %}">New schema</a>
+  </div>
+  <table id="main-table" class="table table-bordered mt-3">
+    <thead>
+      <tr>
+        <th scope="col">#</th>
+        <th scope="col">Title</th>
+        <th scope="col">Modified</th>
+        <th scope="col" >Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for schema in schemas %}
+      <tr>
+        <th>{{ schema.id }}</th>
+        <td><a href="{% url 'datasets' schema.id %}" target="_blank">{{ schema.filename }}</a></td>
+        <td>{{ schema.modified }}</td>
+        <td>
+          <div class="row">
+            <a class="text-primary mx-sm-3" href="{% url 'edit_schema' schema.id %}">Edit scheme</a>
+            <button class="text-danger btn-delete" type="button" onclick="deleteSchema(this, '{{ schema.id }}')">Delete</button>
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endblock %}
+
+{% block javascript %}
+  <script>
+    function deleteSchema(button, schema_id) {
+      var req = new XMLHttpRequest();
+      req.open("DELETE", `{% url 'api:schema' %}?schema=${schema_id}`, true);
+
+      req.onreadystatechange = function () {
+        if (this.status === 200) {
+          const current_tr = button.parentNode.parentNode.parentNode;
+          current_tr.parentNode.deleteRow(current_tr.rowIndex-1)
+        }
+      };
+
+      req.setRequestHeader("X-CSRFToken", csrftoken)
+      req.setRequestHeader('Content-Type', 'application/json')
+      req.send();
+    }
+  </script>
+{% endblock %}
