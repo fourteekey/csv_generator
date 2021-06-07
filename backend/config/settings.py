@@ -3,7 +3,7 @@ import environ
 
 
 env = environ.Env(DEBUG=(bool, False),)
-# environ.Env.read_env()    # For local run
+# environ.Env.read_env()    # ONLY For local run # TODO: Hide before deploy
 
 SETTINGS_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 BASE_DIR = os.path.dirname(SETTINGS_DIR)
@@ -188,3 +188,8 @@ CELERY_BEAT_SCHEDULE = {
         'task': 'csv_generator.tasks.clean_task', 'schedule': 300,  # every 300 sec
     }
 }
+
+##########
+# DROPBOX #
+##########
+DROPBOX_API = env.str('DROPBOX_API')

@@ -1,5 +1,6 @@
 import csv
 import logging
+import dropbox
 
 from django.conf import settings
 from faker import Faker
@@ -69,6 +70,18 @@ def generate_dataset_task(dataset_id):
             writer.writerows(rows)
         count_row -= SLICE_ROW
 
+    file_url = None
+    dbx = dropbox.Dropbox(settings.DROPBOX_API)
+    with open(filepath, 'rb') as f:
+        dbx.files_upload(f.read(), filepath)
+        try:
+            dbx.sharing_create_shared_link_with_settings(filepath)
+        except Exception:
+            pass
+        links = dbx.sharing_list_shared_links(filepath).links
+        if links: file_url = links[0].url
+
+    dataset.file_url = file_url
     dataset.status = StatusDataSet.objects.get(id=3)
     dataset.save()
     return

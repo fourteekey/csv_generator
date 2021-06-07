@@ -30,8 +30,12 @@
           </td>
           <td>
             {% if data.status_id == 3 %}
-              <a class="text-primary " href="{% url 'download_dataset' data.id %}" target="_blank">Download</a></td>
+              <a class="text-primary " href="{% url 'download_dataset' data.id %}" target="_blank">Download</a><br>
+              {% if data.file_url %}
+                <a class="text-primary " href="{{ data.file_url }}" target="_blank">DropBox Download</a>
+              {% endif %}
             {% endif %}
+          </td>
         </tr>
       {% endfor %}
     </tbody>

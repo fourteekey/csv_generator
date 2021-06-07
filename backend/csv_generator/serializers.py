@@ -57,4 +57,5 @@ class DataSetSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = DataSets
-        fields = ('id', 'filepath', 'count_rows', 'created', 'status_id', 'status', 'css_style', 'schema_id')
+        fields = ('id', 'filepath', 'file_url', 'count_rows', 'created', 'status_id', 'status', 'css_style',
+                  'schema_id')

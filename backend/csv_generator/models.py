@@ -79,6 +79,7 @@ class SchemaColumns(models.Model):
 class DataSets(models.Model):
     schema = models.ForeignKey('Schemas', on_delete=models.CASCADE)
     filepath = models.CharField(max_length=200)
+    file_url = models.CharField(max_length=200, default=None, null=True)
     task_id = models.CharField(max_length=100, default=None, null=True)
     count_rows = models.IntegerField()
     updated = models.DateTimeField(auto_now=True)
